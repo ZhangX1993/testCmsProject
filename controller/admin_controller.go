@@ -5,7 +5,9 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
 	"github.com/kataras/iris/v12/sessions"
+	"myapp/cmsProject/model"
 	"myapp/cmsProject/service"
+	"myapp/cmsProject/utils"
 )
 
 type AdminController struct {
@@ -69,4 +71,44 @@ func (ac *AdminController) PostLogin(context iris.Context) mvc.Result{
 			"message":"管理员登陆成功",
 		},
 	}
+}
+
+//管理员信息查询接口
+//接口：/admin/info
+//请求：get
+func (ac *AdminController) GetInfo() mvc.Result{
+	//从session中获取信息
+	userbyte:=ac.Session.Get(ADMIN)
+
+	//若session为空
+	if userbyte==nil{
+		return mvc.Response{
+			Object: map[string]interface{}{
+				"status": utils.RECODE_UNLOGIN,
+				"type": utils.EEROR_UNLOGIN,
+				"message": utils.Recode2Text(utils.EEROR_UNLOGIN),
+			},
+		}
+	}
+
+	//若session非空，解析数据到admin结构体
+	var admin model.Admin
+	err:=json.Unmarshal(userbyte.([]byte),&admin)
+	if err!=nil{
+		return mvc.Response{
+			Object: map[string]interface{}{
+				"status": utils.RECODE_UNLOGIN,
+				"type": utils.EEROR_UNLOGIN,
+				"message": utils.Recode2Text(utils.EEROR_UNLOGIN),
+			},
+		}
+	}
+
+	return mvc.Response{
+		Object: map[string]interface{}{
+			"status": utils.RECODE_OK,
+			"data": admin.AdminToRespDesc(),
+		},
+	}
+
 }
